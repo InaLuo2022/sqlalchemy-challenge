@@ -24,7 +24,7 @@ Base.classes.keys()
 # Save references to each table
 # Assign the 'measurement' to a variable called 'Measurement'
 measurement = Base.classes.measurement
-station = Base.classes.station
+station_list = Base.classes.station
 
 # Create our session (link) from Python to the DB
 # Create a session
@@ -48,34 +48,32 @@ def welcome():
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
-        f"/api/v1.0/<start><br/>" 
-        f"/api/v1.0/<start>/<end>")
+        f"/api/v1.0/YYYY-MM-DD<br/>" 
+        f'input date in the format of YYYY-MM-DD<br/>'
+        f"/api/v1.0/YYYY-MM-DD/YYYY-MM-DD<br/>" 
+        f'input date in the format of YYYY-MM-DD')
 
 # Convert the query results to a dictionary by using date as the key and prcp as the value.
 # Return the JSON representation of your dictionary.
 @app.route("/api/v1.0/precipitation")
 def precipitation():
     # Query all passengers
-    results_date = session.query(measurement.date).all()
-    results_prcp = session.query(measurement.prcp).all()
+    results = session.query(measurement.date,measurement.prcp).all()
 
-    results_date_list = list(np.ravel(results_date))
-    results_prcp_list = list(np.ravel(results_prcp))
+    results_list = list(np.ravel(results))
 
-    date_prcp_list = dict(zip(results_date_list, results_prcp_list))
-
-    return jsonify(date_prcp_list)
+    return jsonify(results_list)
 
 # Return a JSON list of stations from the dataset.
 @app.route("/api/v1.0/stations")
 def stations():
 
-    stations = session.query(station.station).all()
+    stations = session.query(station_list.station).all()
 
     # Convert list of tuples into normal list
-    list_stations = list(np.ravel(stations))
+    stations_all = list(np.ravel(stations))
 
-    return jsonify(list_stations)
+    return jsonify(stations_all)
 
 @app.route("/api/v1.0/tobs")
 def tobs():
@@ -94,27 +92,25 @@ def tobs():
 
     return jsonify(USC00519281_list)
 
-@app.route("/api/v1.0/<start>")
+@app.route("/api/v1.0/<start_date>")
 def start_route(start_date):
 
     # Returns the min, max, and average temperatures calculated from the given start date to the end of the dataset
     tobs_min = session.query(func.min(measurement.tobs)).filter(measurement.date >= start_date).all()
     tobs_max = session.query(func.max(measurement.tobs)).filter(measurement.date >= start_date).all()
-    tobs_avg = session.query(func.mean(measurement.tobs)).filter(measurement.date >= start_date).all()
+    tobs_avg = session.query(func.avg(measurement.tobs)).filter(measurement.date >= start_date).all()
 
-    return jsonify({f"The minimum temperature is {tobs_min}, the maximum temperature is {tobs_max} \
-                        and the average temperature is {tobs_avg}."})
+    return jsonify({'min_temperature': tobs_min},{'max_temperature':tobs_max},{'avg_temperature':tobs_avg})
 
-@app.route("/api/v1.0/<start>/<end>")
-def start_route(start_date,end_date):
+@app.route("/api/v1.0/<start_date>/<end_date>")
+def start_end_route(start_date,end_date):
 
     # Returns the min, max, and average temperatures calculated from the given start date to the end of the dataset
-    tobs_min = session.query(func.min(measurement.tobs)).filter(measurement.date >= start_date, measurement.date <= end_date).all()
-    tobs_max = session.query(func.max(measurement.tobs)).filter(measurement.date >= start_date, measurement.date <= end_date).all()
-    tobs_avg = session.query(func.mean(measurement.tobs)).filter(measurement.date >= start_date, measurement.date <= end_date).all()
+    tobs_min_1 = session.query(func.min(measurement.tobs)).filter(measurement.date >= start_date, measurement.date <= end_date).all()
+    tobs_max_1 = session.query(func.max(measurement.tobs)).filter(measurement.date >= start_date, measurement.date <= end_date).all()
+    tobs_avg_1 = session.query(func.avg(measurement.tobs)).filter(measurement.date >= start_date, measurement.date <= end_date).all()
 
-    return jsonify({f"The minimum temperature is {tobs_min}, the maximum temperature is {tobs_max} \
-                        and the average temperature is {tobs_avg}."})
+    return jsonify({'min_temperature': tobs_min_1},{'max_temperature':tobs_max_1},{'avg_temperature':tobs_avg_1})
 
 if __name__ == "__main__":
     app.run(debug=True)
