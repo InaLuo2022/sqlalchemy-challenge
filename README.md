@@ -17,7 +17,7 @@ sqlalchemy-challenge
 
 --- Plot the results as a histogram with bins
 
-## Part 2: Design Your Climate App
+## Part 2: Design Your Climate App - save in 'app.py'
 
 --- design a Flask API with routs：
     
